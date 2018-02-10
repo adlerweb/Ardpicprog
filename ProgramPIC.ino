@@ -109,19 +109,19 @@ const char s_pic16f887[]  PROGMEM = "pic16f887";
 // been tested by the author.  Patches welcome to improve the list.
 struct deviceInfo
 {
-    const prog_char *name;      // User-readable name of the device.
-    prog_int16_t deviceId;      // Device ID for the PIC (-1 if no id).
-    prog_uint32_t programSize;  // Size of program memory (words).
-    prog_uint32_t configStart;  // Flat address start of configuration memory.
-    prog_uint32_t dataStart;    // Flat address start of EEPROM data memory.
-    prog_uint16_t configSize;   // Number of configuration words.
-    prog_uint16_t dataSize;     // Size of EEPROM data memory (bytes).
-    prog_uint16_t reservedWords;// Reserved program words (e.g. for OSCCAL).
-    prog_uint16_t configSave;   // Bits in config word to be saved.
-    prog_uint8_t progFlashType; // Type of flash for program memory.
-    prog_uint8_t dataFlashType; // Type of flash for data memory.
-
+    const char *name __attribute__((__progmem__));      // User-readable name of the device.
+    int16_t deviceId __attribute__((__progmem__));      // Device ID for the PIC (-1 if no id).
+    uint32_t programSize __attribute__((__progmem__));  // Size of program memory (words).
+    uint32_t configStart __attribute__((__progmem__));  // Flat address start of configuration memory.
+    uint32_t dataStart __attribute__((__progmem__));    // Flat address start of EEPROM data memory.
+    uint16_t configSize __attribute__((__progmem__));   // Number of configuration words.
+    uint16_t dataSize __attribute__((__progmem__));     // Size of EEPROM data memory (bytes).
+    uint16_t reservedWords __attribute__((__progmem__));// Reserved program words (e.g. for OSCCAL).
+    uint16_t configSave __attribute__((__progmem__));   // Bits in config word to be saved.
+    uint8_t progFlashType __attribute__((__progmem__)); // Type of flash for program memory.
+    uint8_t dataFlashType __attribute__((__progmem__)); // Type of flash for data memory.
 };
+
 struct deviceInfo const devices[] PROGMEM = {
     // http://ww1.microchip.com/downloads/en/DeviceDoc/41191D.pdf
     {s_pic12f629,  0x0F80, 1024, 0x2000, 0x2100, 8, 128, 1, 0x3000, FLASH4, EEPROM},
@@ -243,7 +243,7 @@ void printHex8(unsigned long word)
     printHex4((unsigned int)word);
 }
 
-void printProgString(const prog_char *str)
+void printProgString(const char *str __attribute__((__progmem__)))
 {
     for (;;) {
         char ch = (char)(pgm_read_byte(str));
@@ -278,7 +278,7 @@ void initDevice(const struct deviceInfo *dev)
 
     // Print the extra device information.
     Serial.print("DeviceName: ");
-    printProgString((const prog_char *)(pgm_read_word(&(dev->name))));
+    printProgString(pgm_read_word(&(dev->name)));
     Serial.println();
     Serial.print("ProgramRange: 0000-");
     printHex8(programEnd);
@@ -365,8 +365,7 @@ void cmdDevice(const char *args)
     // Find the device in the built-in list if we have details for it.
     int index = 0;
     for (;;) {
-        const prog_char *name = (const prog_char *)
-            (pgm_read_word(&(devices[index].name)));
+        const char *name __attribute__((__progmem__)) = (pgm_read_word(&(devices[index].name)));
         if (!name) {
             index = -1;
             break;
@@ -409,8 +408,7 @@ void cmdDevices(const char *args)
     Serial.println("OK");
     int index = 0;
     for (;;) {
-        const prog_char *name = (const prog_char *)
-            (pgm_read_word(&(devices[index].name)));
+        const char *name __attribute__((__progmem__)) = (pgm_read_word(&(devices[index].name)));
         if (!name)
             break;
         if (index > 0) {
@@ -445,8 +443,7 @@ void cmdSetDevice(const char *args)
     // Look for the name in the devices list.
     int index = 0;
     for (;;) {
-        const prog_char *name = (const prog_char *)
-            (pgm_read_word(&(devices[index].name)));
+        const char *name __attribute__((__progmem__)) = (pgm_read_word(&(devices[index].name)));
         if (!name)
             break;
         if (matchString(name, args, len)) {
@@ -919,10 +916,10 @@ void cmdPowerOff(const char *args)
 typedef void (*commandFunc)(const char *args);
 typedef struct
 {
-    const prog_char *name;
+    const char *name __attribute__((__progmem__));
     commandFunc func;
-    const prog_char *desc;
-    const prog_char *args;
+    const char *desc __attribute__((__progmem__));
+    const char *args __attribute__((__progmem__));
 } command_t;
 const char s_cmdRead[] PROGMEM = "READ";
 const char s_cmdReadDesc[] PROGMEM =
@@ -982,14 +979,11 @@ void cmdHelp(const char *args)
     Serial.println("OK");
     int index = 0;
     for (;;) {
-        const prog_char *name = (const prog_char *)
-            (pgm_read_word(&(commands[index].name)));
+        const char *name __attribute__((__progmem__)) = (pgm_read_word(&(commands[index].name)));
         if (!name)
             break;
-        const prog_char *desc = (const prog_char *)
-            (pgm_read_word(&(commands[index].desc)));
-        const prog_char *args = (const prog_char *)
-            (pgm_read_word(&(commands[index].args)));
+        const char *desc __attribute__((__progmem__)) = (pgm_read_word(&(commands[index].desc)));
+        const char *args __attribute__((__progmem__)) = (pgm_read_word(&(commands[index].args)));
         printProgString(name);
         if (args) {
             Serial.print(' ');
@@ -1005,7 +999,7 @@ void cmdHelp(const char *args)
 }
 
 // Match a data-space string where the name comes from PROGMEM.
-bool matchString(const prog_char *name, const char *str, int len)
+bool matchString(const char *name __attribute__((__progmem__)), const char *str, int len)
 {
     for (;;) {
         char ch1 = (char)(pgm_read_byte(name));
@@ -1054,8 +1048,7 @@ void processCommand(const char *buf)
     // Find the command and execute it.
     int index = 0;
     for (;;) {
-        const prog_char *name = (const prog_char *)
-            (pgm_read_word(&(commands[index].name)));
+          const char *name __attribute__((__progmem__)) = (pgm_read_word(&(commands[index].name)));
         if (!name)
             break;
         if (matchString(name, cmd, len)) {
