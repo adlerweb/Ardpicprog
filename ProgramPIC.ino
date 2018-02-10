@@ -20,7 +20,7 @@
 
 // Pin mappings for the PIC programming shield.
 #define PIN_MCLR        A1      // 0: MCLR is VPP voltage, 1: Reset PIC
-#define PIN_ACTIVITY    A5      // LED that indicates read/write activity
+#define PIN_ACTIVITY    13      // LED that indicates read/write activity
 #define PIN_VDD         2       // Controls the power to the PIC
 #define PIN_CLOCK       4       // Clock pin
 #define PIN_DATA        7       // Data pin
